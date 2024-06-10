@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lista de Produtos</title>
+<link rel="stylesheet" href="produto.css">
+</head>
+<body>
+	<div class="container">
+		<h1>Lista de Produtos</h1>
+		
+		<div class="busca">
+    <label for="buscaInput">Buscar por ID ou Nome:</label>
+    <input type="text" id="buscaInput" oninput="filtrarProdutos()" placeholder="Digite ID ou Nome...">
+    <button onclick="limparBusca()">Limpar</button>
+</div>
+		
+
+		<a href="index.html" class="button">Cadastrar produtos</a>
+		<table id="tabelaProdutos" class="table">
+			
+			
+			
+			<thead>
+				<tr>
+					<th>ID</th>
+					<!-- Nova coluna para o ID -->
+					<th>Nome do Produto</th>
+					<th>Descrição</th>
+					<th>Quantidade</th>
+					<th>Preço</th>
+					<th>URL da Imagem</th>
+					<th>Ações</th>
+					<!-- Nova coluna para as ações -->
+				</tr>
+			</thead>
+			<tbody>
+				<!-- Aqui serão inseridas as linhas da tabela dinamicamente -->
+			</tbody>
+		</table>
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+	<script>
+        // Função para carregar os dados dos produtos
+        function carregarProdutos() {
+            fetch('/api/produtos') // Endpoint da API que retorna todos os produtos
+                .then(response => response.json())
+                .then(data => {
+                    const tabelaProdutos = document.getElementById('tabelaProdutos');
+                    const tbody = tabelaProdutos.querySelector('tbody');
+                    tbody.innerHTML = ''; // Limpa o conteúdo atual da tabela
+
+                    data.forEach(produto => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${produto.id}</td> <!-- Exibe o ID do produto -->
+                            <td>${produto.name}</td>
+                            <td>${produto.descricao}</td>
+                          
+                               
+                            <td>
+                            <span id="quantidade-${produto.id}">${produto.quantidade}</span>
+                        </td>
+                                
+                           
+                            <td>${produto.preco}</td>
+                            <td><img src="${produto.urlImagem}" class="img_size"></td>
+                            <td>
+                                <button onclick='editarProduto(${JSON.stringify(produto)})'>Editar</button>
+                                <button onclick="excluirProduto(${produto.id})">Excluir</button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar produtos:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erro ao carregar os produtos. Tente novamente mais tarde!',
+                    });
+                });
+        }
+
+        // Função para alterar a quantidade de um produto
+        function alterarQuantidade(produtoId, quantidade) {
+            // Implementação para alterar a quantidade do produto
+        }
+
+        // Função para editar um produto
+        function editarProduto(produto) {
+            const url = gerarURLProduto(produto);
+            window.location.href = url;
+        }
+
+        // Função para excluir um produto
+        function excluirProduto(produtoId) {
+            Swal.fire({
+                title: 'Tem certeza?',
+                text: 'Você não poderá reverter isso!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sim, exclua!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/api/produtos/${produtoId}`, {
+                        method: 'DELETE',
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Produto excluído com sucesso!',
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                carregarProdutos(); // Recarrega a lista de produtos após a exclusão
+                            });
+                        } else {
+                            throw new Error('Erro ao excluir produto');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro ao excluir produto:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Erro ao excluir o produto. Tente novamente mais tarde!',
+                        });
+                    });
+                }
+            });
+        }
+        
+        // Buscardor 
+        function filtrarProdutos() {
+    const input = document.getElementById('buscaInput');
+    const filtro = input.value.toUpperCase();
+    const tabela = document.getElementById('tabelaProdutos');
+    const linhas = tabela.getElementsByTagName('tr');
+
+    for (let i = 0; i < linhas.length; i++) {
+        let encontrou = false;
+        const cols = linhas[i].getElementsByTagName('td');
+
+        for (let j = 0; j < cols.length && !encontrou; j++) {
+            const texto = cols[j].innerText.toUpperCase();
+            if (texto.indexOf(filtro) > -1) {
+                encontrou = true;
+            }
+        }
+
+        linhas[i].style.display = encontrou ? '' : 'none';
+    }
+}
+
+// Função para limpar o campo de busca e mostrar todos os produtos novamente
+function limparBusca() {
+    const input = document.getElementById('buscaInput');
+    input.value = '';
+    filtrarProdutos();
+}
+
+        function gerarURLProduto(produto) {
+            const produtoJSON = JSON.stringify(produto); // Codifica o objeto em JSON
+            const url = `editar-produto.html?produto=${encodeURIComponent(produtoJSON)}`; // Concatena a URL com o JSON codificado e URL encode
+            return url;
+        }
+
+        // Chama a função para carregar os produtos ao carregar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarProdutos();
+        });
+    </script>
+</body>
+</html>

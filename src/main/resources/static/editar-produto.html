@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Produto</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <h1>Editar Produto</h1>
+    <a href="lista-produtos.html" class="button">Ver Lista de Produtos</a>
+    <div>
+        <form id="produtoForm">
+            <input type="hidden" id="produtoId" name="produtoId">
+            <label for="nome">Nome do Produto:</label>
+            <input type="text" id="nome" name="nome" required><br>
+            <label for="descricao">Descrição:</label>
+            <input type="text" id="descricao" name="descricao" required><br>
+            <label for="quantidade">Quantidade:</label>
+            <input type="number" id="quantidade" name="quantidade" required><br>
+            <label for="preco">Preço:</label>
+            <input type="number" id="preco" name="preco" step="0.01" required><br>
+            <label for="urlImagem">URL da Imagem:</label>
+            <input type="url" id="urlImagem" name="urlImagem" required><br>
+            <button type="submit">Salvar Produto</button>
+        </form>
+    </div>
+
+    <script>
+        // Função para preencher o formulário com os dados do produto
+        function preencherFormulario(produto) {
+            if (produto) {
+                document.getElementById('produtoId').value = produto.id;
+                document.getElementById('nome').value = produto.name;
+                document.getElementById('descricao').value = produto.descricao;
+                document.getElementById('quantidade').value = produto.quantidade;
+                document.getElementById('preco').value = produto.preco;
+                document.getElementById('urlImagem').value = produto.urlImagem;
+            }
+        }
+
+        // Função para carregar os dados do produto da URL
+        function carregarProdutoDaURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const produtoJSON = urlParams.get('produto'); // Obtém o JSON da URL
+            if (produtoJSON) {
+                const produto = JSON.parse(decodeURIComponent(produtoJSON)); // Decodifica o JSON
+                preencherFormulario(produto);
+            } else {
+                console.error('Produto não encontrado na URL');
+            }
+        }
+
+        // Função para editar um produto
+        function editarProduto(produtoId) {
+            const form = document.forms['produtoForm'];
+            const nome = form.elements['nome'].value;
+            const descricao = form.elements['descricao'].value;
+            const quantidade = form.elements['quantidade'].value;
+            const preco = form.elements['preco'].value;
+            const urlImagem = form.elements['urlImagem'].value;
+
+            fetch(`/api/produtos/${produtoId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: produtoId,
+                    name: nome,
+                    descricao: descricao,
+                    quantidade: quantidade,
+                    preco: preco,
+                    urlImagem: urlImagem
+                }),
+            })
+            .then(response => {
+                if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Produto atualizado com sucesso!',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        window.location.href = 'lista-produtos.html'; // Volta para a lista de produtos após a atualização
+                    });
+                } else {
+                    throw new Error('Erro ao editar produto');
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao editar produto:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Erro ao editar o produto. Tente novamente mais tarde!',
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarProdutoDaURL();
+            const form = document.getElementById('produtoForm');
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const produtoId = document.getElementById('produtoId').value;
+                editarProduto(produtoId);
+            });
+        });
+    </script>
+</body>
+</html>
